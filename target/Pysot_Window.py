@@ -1,8 +1,11 @@
+<<<<<<< HEAD
 """
 coding: utf-8
 Author: 12003990410 陈思宇
 Time:   2023/5/20
 """
+=======
+>>>>>>> 298dec4163f265c36697f0e970935a2978aac1a2
 
 from __future__ import absolute_import
 from __future__ import division
@@ -15,6 +18,10 @@ import numpy as np
 from design2.pysot.core.config import cfg
 from design2.pysot.models.model_builder import ModelBuilder
 from design2.pysot.tracker.tracker_builder import build_tracker
+<<<<<<< HEAD
+=======
+
+>>>>>>> 298dec4163f265c36697f0e970935a2978aac1a2
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
 from single_object_target import Ui_single_object_target
 from PyQt5.QtGui import QImage, QPixmap
@@ -64,6 +71,7 @@ class Pysot_Window(QMainWindow, Ui_single_object_target):
     def load_yaml_pth(self):
         self.config_path = '../models/siamrpn_alex_dwxcorr_otb/config.yaml'
         self.snapshot_path = '../models/siamrpn_alex_dwxcorr_otb/model.pth'
+<<<<<<< HEAD
 
     # 初始化跟踪模型
     def init_track(self):
@@ -82,6 +90,20 @@ class Pysot_Window(QMainWindow, Ui_single_object_target):
         self.model.load_state_dict(self.checkpoint)
         # 将跟踪模型切换到评估模式，并将其移动到指定的设备
         self.model.eval().to(device)
+=======
+    # 初始化跟踪模型
+    def init_track(self):
+        cfg.merge_from_file(self.config_path)  # 从训练的模型中加载配置信息并将其合并到当前配置中
+        cfg.CUDA = torch.cuda.is_available() and cfg.CUDA  # 检查当前系统是否支持CUDA，并将结果存储在变量中
+        device = torch.device('cuda' if cfg.CUDA else 'cpu')  # 根据当前系统是否支持CUDA来选择使用CPU还是GPU进行训练和跟踪
+        self.tb_show_message.append('模型对象创建...')
+        # 从指定pysot的快照文件中加载模型参数并将其存储在变量中
+        self.checkpoint = torch.load(self.snapshot_path, map_location=lambda storage, loc: storage.cpu())
+        self.model = ModelBuilder()  # 创建ModelBuilder对象用于构建跟踪模型
+
+        self.model.load_state_dict(self.checkpoint)        #  将从快照文件中加载的模型参数加载到跟踪模型
+        self.model.eval().to(device)  # 将跟踪模型切换到评估模式，并将其移动到指定的设备
+>>>>>>> 298dec4163f265c36697f0e970935a2978aac1a2
         self.tb_show_message.append('跟踪模型加载完成!')
         # 创建跟踪器
         self.tracker = build_tracker(self.model)
@@ -236,6 +258,7 @@ class Pysot_Window(QMainWindow, Ui_single_object_target):
                 ret, frame = self.camera.read()
                 if ret is True:
                     frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_CUBIC)
+<<<<<<< HEAD
                     # 使用跟踪器对图像进行跟踪，得到跟踪结果
                     outputs = self.tracker.track(frame)
                     # 如果包含多边形信息，表示跟踪器成功地检测到目标物体的形状。
@@ -257,6 +280,18 @@ class Pysot_Window(QMainWindow, Ui_single_object_target):
                     else:
                         # 如果跟踪结果中没有多边形信息，即无法检测到目标物体的形状，
                         # 那么将根据跟踪结果中的边界框信息（outputs['bbox']）在图像上绘制矩形框。
+=======
+                    outputs = self.tracker.track(frame)
+                    if 'polygon' in outputs:
+                        polygon = np.array(outputs['polygon']).astype(np.int32)
+                        cv2.polylines(frame, [polygon.reshape((-1, 1, 2))],
+                                      True, (0, 255, 0), 3)
+                        mask = ((outputs['mask'] > cfg.TRACK.MASK_THERSHOLD) * 255)
+                        mask = mask.astype(np.uint8)
+                        mask = np.stack([mask, mask * 255, mask]).transpose(1, 2, 0)
+                        frame = cv2.addWeighted(frame, 0.77, mask, 0.23, -1)
+                    else:
+>>>>>>> 298dec4163f265c36697f0e970935a2978aac1a2
                         bbox = list(map(int, outputs['bbox']))
                         cv2.rectangle(frame, (bbox[0], bbox[1]),
                                       (bbox[0] + bbox[2], bbox[1] + bbox[3]),
@@ -293,6 +328,10 @@ class Pysot_Window(QMainWindow, Ui_single_object_target):
                 self.tb_show_message.append('exceptions！')
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 298dec4163f265c36697f0e970935a2978aac1a2
     def press_end(self):
         # 摄像头的
         if self.camera_flag is True:
