@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 
 
-# 创建一个由卷积、批归一化和ReLU6激活函数组成的序列模块
 def conv_bn(inp, oup, stride, padding=1):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 3, stride, padding, bias=False),
@@ -15,7 +14,7 @@ def conv_bn(inp, oup, stride, padding=1):
         nn.ReLU6(inplace=True)
     )
 
-# 创建一个由1x1卷积、批归一化和ReLU6激活函数组成的序列模块
+
 def conv_1x1_bn(inp, oup):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
@@ -24,11 +23,8 @@ def conv_1x1_bn(inp, oup):
     )
 
 
-# 定义了MobileNetV2中的Inverted Residual块
 class InvertedResidual(nn.Module):
-    # 接受输入通道数（inp）、输出通道数（oup）、步长（stride）、扩展因子（expand_ratio）和膨胀率（dilation）
     def __init__(self, inp, oup, stride, expand_ratio, dilation=1):
-        # 实现了MobileNetV2中的倒残差结构，包含了一个1x1卷积层、一个3x3深度可分离卷积层和一个1x1卷积层
         super(InvertedResidual, self).__init__()
         self.stride = stride
 
@@ -61,12 +57,10 @@ class InvertedResidual(nn.Module):
             return self.conv(x)
 
 
-# MobileNetV2模型的主要部分
 class MobileNetV2(nn.Sequential):
     def __init__(self, width_mult=1.0, used_layers=[3, 5, 7]):
         super(MobileNetV2, self).__init__()
 
-        # 各个阶段的设置
         self.interverted_residual_setting = [
             # t, c, n, s
             [1, 16, 1, 1, 1],
@@ -79,7 +73,6 @@ class MobileNetV2(nn.Sequential):
         ]
         # 0,2,3,4,6
 
-        # 通道数
         self.interverted_residual_setting = [
             # t, c, n, s
             [1, 16, 1, 1, 1],
@@ -127,7 +120,6 @@ class MobileNetV2(nn.Sequential):
 
             self.add_module('layer%d' % (idx), nn.Sequential(*layers))
 
-    # 通过循环遍历每个层，并将对应的输出存储在列表
     def forward(self, x):
         outputs = []
         for idx in range(8):
@@ -151,7 +143,6 @@ if __name__ == '__main__':
 
     print(net)
 
-    # 创建了一个输入张量tensor并将其传递给模型进行前向计算。最后，打印了各个层的输出尺寸。
     from torch.autograd import Variable
     tensor = Variable(torch.Tensor(1, 3, 255, 255)).cuda()
 

@@ -26,12 +26,9 @@ pyv = sys.version[0]
 if pyv[0] == '3':
     cv2.ocl.setUseOpenCL(False)
 
-"""
-SubDataset 类用于处理子数据集，而 TrkDataset 类用于处理整个数据集。
-"""
+
 class SubDataset(object):
     def __init__(self, name, root, anno, frame_range, num_use, start_idx):
-        # 始化子数据集，包括加载元数据、过滤无效帧和轨迹等
         cur_path = os.path.dirname(os.path.realpath(__file__))
         self.name = name
         # self.root = os.path.join(cur_path, '../../', root)
@@ -70,7 +67,6 @@ class SubDataset(object):
         self.path_format = '{}.{}.{}.jpg'
         self.pick = self.shuffle()
 
-    # 过滤掉宽度或高度为零的边界框
     def _filter_zero(self, meta_data):
         meta_data_new = {}
         for video, tracks in meta_data.items():
@@ -93,13 +89,11 @@ class SubDataset(object):
                 meta_data_new[video] = new_tracks
         return meta_data_new
 
-    # 记录子数据集的相关信息
     def log(self):
         logger.info("{} start-index {} select [{}/{}] path_format {}".format(
             self.name, self.start_idx, self.num_use,
             self.num, self.path_format))
 
-    # 随机打乱子数据集的顺序
     def shuffle(self):
         lists = list(range(self.start_idx, self.start_idx + self.num))
         pick = []
@@ -108,7 +102,6 @@ class SubDataset(object):
             pick += lists
         return pick[:self.num_use]
 
-    # 根据视频、轨迹和帧数获取图像路径和标注信息
     def get_image_anno(self, video, track, frame):
         frame = "{:06d}".format(frame)
         image_path = os.path.join(self.root, video,
@@ -116,7 +109,6 @@ class SubDataset(object):
         image_anno = self.labels[video][track][frame]
         return image_path, image_anno
 
-    # 从子数据集中获取正样本对
     def get_positive_pair(self, index):
         video_name = self.videos[index]
         video = self.labels[video_name]
@@ -133,7 +125,6 @@ class SubDataset(object):
         return self.get_image_anno(video_name, track, template_frame), \
             self.get_image_anno(video_name, track, search_frame)
 
-    # 从子数据集中随机获取一个目标
     def get_random_target(self, index=-1):
         if index == -1:
             index = np.random.randint(0, self.num)
@@ -145,13 +136,11 @@ class SubDataset(object):
         frame = np.random.choice(frames)
         return self.get_image_anno(video_name, track, frame)
 
-    # 返回子数据集的长度
     def __len__(self):
         return self.num
 
 
 class TrkDataset(Dataset):
-    # 初始化整个数据集，包括创建子数据集、数据增强等
     def __init__(self,):
         super(TrkDataset, self).__init__()
 
@@ -203,7 +192,6 @@ class TrkDataset(Dataset):
         self.num *= cfg.TRAIN.EPOCH
         self.pick = self.shuffle()
 
-    # 随机打乱整个数据集的顺序
     def shuffle(self):
         pick = []
         m = 0
@@ -219,13 +207,11 @@ class TrkDataset(Dataset):
         logger.info("dataset length {}".format(self.num))
         return pick[:self.num]
 
-    # 根据索引找到对应的子数据集
     def _find_dataset(self, index):
         for dataset in self.all_dataset:
             if dataset.start_idx + dataset.num > index:
                 return dataset, index - dataset.start_idx
 
-    # 根据图像和形状信息获取边界框
     def _get_bbox(self, image, shape):
         imh, imw = image.shape[:2]
         if len(shape) == 4:
@@ -246,7 +232,7 @@ class TrkDataset(Dataset):
 
     def __len__(self):
         return self.num
-    # 根据索引获取数据集中的一个样本，包括模板图像、搜索图像、类别标签、位置标签和位置权重
+
     def __getitem__(self, index):
         index = self.pick[index]
         dataset, index = self._find_dataset(index)

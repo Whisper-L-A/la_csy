@@ -12,11 +12,7 @@ from design2.pysot.utils.bbox import corner2center, \
         Center, center2corner, Corner
 
 
-"""
-这个类可以用于数据增强，提高模型的泛化能力 
-"""
 class Augmentation:
-    # 设置平移、缩放、模糊、翻转和颜色变换的参数
     def __init__(self, shift, scale, blur, flip, color):
         self.shift = shift
         self.scale = scale
@@ -30,10 +26,8 @@ class Augmentation:
 
     @staticmethod
     def random():
-        # 生成一个随机数，范围在 -1.0 到 1.0 之间
         return np.random.random() * 2 - 1.0
 
-    # 根据给定的边界框（bbox）和输出尺寸（out_sz），对图像进行裁剪并添加填充（padding）
     def _crop_roi(self, image, bbox, out_sz, padding=(0, 0, 0)):
         bbox = [float(x) for x in bbox]
         a = (out_sz-1) / (bbox[2]-bbox[0])
@@ -47,8 +41,6 @@ class Augmentation:
                               borderValue=padding)
         return crop
 
-    # 对图像进行模糊处理。
-    # 首先随机生成一个卷积核，然后使用 cv2.filter2D 函数对图像进行卷积操作
     def _blur_aug(self, image):
         def rand_kernel():
             sizes = np.arange(5, 46, 2)
@@ -63,7 +55,6 @@ class Augmentation:
         image = cv2.filter2D(image, -1, kernel)
         return image
 
-    # 对图像进行颜色变换。通过与一个随机生成的偏移量矩阵相乘，改变图像的颜色
     def _color_aug(self, image):
         offset = np.dot(self.rgbVar, np.random.randn(3, 1))
         offset = offset[::-1]  # bgr 2 rgb
@@ -71,15 +62,11 @@ class Augmentation:
         image = image - offset
         return image
 
-    # 将图像转换为灰度图像，然后再转换回 BGR 格式
     def _gray_aug(self, image):
         grayed = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         image = cv2.cvtColor(grayed, cv2.COLOR_GRAY2BGR)
         return image
 
-    # 对图像进行平移和缩放操作。
-    # 首先根据平移和缩放参数调整裁剪边界框（crop_bbox）和目标边界框（bbox），
-    # 然后使用 _crop_roi 方法对图像进行裁剪。
     def _shift_scale_aug(self, image, bbox, crop_bbox, size):
         im_h, im_w = image.shape[:2]
 
@@ -120,7 +107,6 @@ class Augmentation:
         image = self._crop_roi(image, crop_bbox, size)
         return image, bbox
 
-    # 对图像进行水平翻转，并更新目标边界框（bbox）
     def _flip_aug(self, image, bbox):
         image = cv2.flip(image, 1)
         width = image.shape[1]
@@ -128,8 +114,6 @@ class Augmentation:
                       width - 1 - bbox.x1, bbox.y2)
         return image, bbox
 
-    # 用于对输入的图像和边界框进行增强操作。首先，根据输入参数决定是否进行灰度变换。然后进行平移和缩放操作。
-    # 接下来，根据概率决定是否进行颜色变换、模糊处理和翻转操作。最后返回增强后的图像和边界框。
     def __call__(self, image, bbox, size, gray=False):
         shape = image.shape
         crop_bbox = center2corner(Center(shape[0]//2, shape[1]//2,

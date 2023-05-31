@@ -12,13 +12,8 @@ from design2.pysot.utils.bbox import IoU, corner2center
 from design2.pysot.utils.anchor import Anchors
 
 
-"""
-用于生成锚点目标。
-这个类主要用于目标跟踪算法中，通过计算正负样本和回归目标来生成锚点目标。
-"""
 class AnchorTarget:
     def __init__(self,):
-        # 创建了一个Anchors对象，用于生成锚点。然后调用generate_all_anchors方法生成所有的锚点。
         self.anchors = Anchors(cfg.ANCHOR.STRIDE,
                                cfg.ANCHOR.RATIOS,
                                cfg.ANCHOR.SCALES)
@@ -26,7 +21,6 @@ class AnchorTarget:
         self.anchors.generate_all_anchors(im_c=cfg.TRAIN.SEARCH_SIZE//2,
                                           size=cfg.TRAIN.OUTPUT_SIZE)
 
-    # target（目标框），size（输出大小）和neg（是否为负样本，默认为False）
     def __call__(self, target, size, neg=False):
         anchor_num = len(cfg.ANCHOR.RATIOS) * len(cfg.ANCHOR.SCALES)
 
@@ -35,7 +29,6 @@ class AnchorTarget:
         delta = np.zeros((4, anchor_num, size, size), dtype=np.float32)
         delta_weight = np.zeros((anchor_num, size, size), dtype=np.float32)
 
-        # 从给定的位置中选择一定数量的样本
         def select(position, keep_num=16):
             num = position[0].shape[0]
             if num <= keep_num:
@@ -45,15 +38,8 @@ class AnchorTarget:
             slt = slt[:keep_num]
             return tuple(p[slt] for p in position), keep_num
 
-        # 计算目标框的中心坐标和宽高
         tcx, tcy, tw, th = corner2center(target)
 
-        """
-         如果neg为True，表示处理负样本。首先将目标框附近的锚点类别设置为0（表示负样本），
-         然后从这些负样本中随机选择一定数量的样本。
-         最后，计算锚点与目标框的重叠度（overlap），
-         并返回cls, delta, delta_weight, overlap。
-        """
         if neg:
             # l = size // 2 - 3
             # r = size // 2 + 3 + 1
@@ -78,13 +64,6 @@ class AnchorTarget:
             overlap = np.zeros((anchor_num, size, size), dtype=np.float32)
             return cls, delta, delta_weight, overlap
 
-        """
-        如果neg为False，表示处理正样本。
-        首先计算锚点的坐标和中心坐标，然后计算回归目标（delta）。
-        接着，计算锚点与目标框的重叠度（overlap），
-        并根据重叠度阈值（cfg.TRAIN.THR_HIGH和cfg.TRAIN.THR_LOW）将锚点分为正样本和负样本。
-        最后，从正负样本中分别选择一定数量的样本，并更新cls和delta_weight
-        """
         anchor_box = self.anchors.all_anchors[0]
         anchor_center = self.anchors.all_anchors[1]
         x1, y1, x2, y2 = anchor_box[0], anchor_box[1], \

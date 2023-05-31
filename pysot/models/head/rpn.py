@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from design2.pysot.core.xcorr import xcorr_fast, xcorr_depthwise
-from design2.pysot.models.init_weight import init_weights
+
 
 class RPN(nn.Module):
     def __init__(self):
